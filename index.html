@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Ranking de Gustos Musicales</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.0.0/dist/tf.min.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+      }
+      label,
+      select,
+      button {
+        display: block;
+        margin: 10px 0;
+      }
+      .result {
+        margin-top: 20px;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Calificá estos grupos del 1 al 10</h1>
+    <form id="voteForm">
+      <div id="bandsContainer"></div>
+      <button type="button" onclick="processVotes()">
+        Procesar Información
+      </button>
+    </form>
+    <div class="result" id="result"></div>
+
+    <script>
+      const bands = [
+        "Nirvana",
+        "Nine Inch Nails",
+        "Backstreet Boys",
+        "N Sync",
+        "Night Club",
+        "Apashe",
+        "STP",
+      ];
+
+      const features = [
+        "Grunge",
+        "Rock",
+        "Industrial",
+        "Boy Band",
+        "Dance",
+        "Techno",
+      ];
+
+      const band_feats = tf.tensor([
+        [1, 1, 0, 0, 0, 0], // Nirvana
+        [1, 0, 1, 0, 0, 0], // Nine Inch Nails
+        [0, 0, 0, 1, 1, 0], // Backstreet Boys
+        [0, 0, 0, 1, 0, 0], // N Sync
+        [0, 0, 1, 0, 0, 1], // Night Club
+        [0, 0, 1, 0, 0, 1], // Apashe
+        [1, 1, 0, 0, 0, 0], // STP
+      ]);
+
+      // Mostrar inputs para cada banda
+      const container = document.getElementById("bandsContainer");
+      bands.forEach((band, index) => {
+        const label = document.createElement("label");
+        label.textContent = `${band}:`;
+
+        const input = document.createElement("input");
+        input.type = "number";
+        input.min = 1;
+        input.max = 10;
+        input.value = 5;
+        input.id = `band-${index}`;
+
+        label.appendChild(input);
+        container.appendChild(label);
+      });
+
+      function processVotes() {
+        // Obtener los votos del usuario
+        const votes = bands.map((_, i) => {
+          const value = parseInt(document.getElementById(`band-${i}`).value);
+          return isNaN(value) ? 0 : value;
+        });
+
+        const user_votes = tf.tensor([votes]);
+
+        const user_feats = tf.matMul(user_votes, band_feats);
+        const top_user_features = tf.topk(user_feats, features.length);
+        const top_genres = top_user_features.indices.arraySync()[0];
+        const rankedCategories = top_genres.map((i) => features[i]);
+
+        document.getElementById("result").textContent =
+          "Tus estilos musicales preferidos son: " +
+          rankedCategories.join(", ");
+      }
+    </script>
+  </body>
+</html>
